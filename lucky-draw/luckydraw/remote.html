@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Remote Draw Control</title>
+</head>
+<body>
+  <h1>Remote Draw Controller</h1>
+  <button onclick="draw()">Trigger Draw</button>
+
+  <script>
+    const channel = new BroadcastChannel("lucky_draw_channel");
+    function draw() {
+      channel.postMessage("draw");
+    }
+  </script>
+</body>
+</html>
