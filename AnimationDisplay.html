@@ -69,16 +69,7 @@
       }
     }
   </style>
-</head>
-<body>
-  <h1 id="prize-title">🎁 Waiting for Prize...</h1>
-  <div class="slot">
-    <div class="roller" id="roller1">&nbsp;</div>
-    <div class="roller" id="roller2">&nbsp;</div>
-    <div class="roller" id="roller3">&nbsp;</div>
-  </div>
-
-  <script>
+  <script type="module">
     const channel = new BroadcastChannel("lucky_draw_channel");
 
     channel.onmessage = (e) => {
@@ -118,5 +109,13 @@
       }, delay);
     }
   </script>
+</head>
+<body>
+  <h1 id="prize-title">🎁 Waiting for Prize...</h1>
+  <div class="slot">
+    <div class="roller" id="roller1">&nbsp;</div>
+    <div class="roller" id="roller2">&nbsp;</div>
+    <div class="roller" id="roller3">&nbsp;</div>
+  </div>
 </body>
 </html>
