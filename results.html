@@ -14,6 +14,14 @@
       text-align: center;
       color: #336699;
     }
+    #search-box {
+      display: block;
+      margin: 20px auto;
+      padding: 10px;
+      font-size: 1rem;
+      width: 60%;
+      max-width: 400px;
+    }
     .result-block {
       border: 1px solid #ccc;
       border-radius: 8px;
@@ -42,39 +50,57 @@
 </head>
 <body>
   <h1>All Lucky Draw Results</h1>
+  <input type="text" id="search-box" placeholder="Search by name or email..." />
   <div id="result-container"></div>
 
   <script>
     const container = document.getElementById("result-container");
-    const groupedResults = JSON.parse(localStorage.getItem("lucky_draw_grouped_results")) || [];
+    const searchBox = document.getElementById("search-box");
 
-    groupedResults.forEach(group => {
-      const block = document.createElement("div");
-      block.className = "result-block";
+    function renderResults() {
+      const groupedResults = JSON.parse(localStorage.getItem("lucky_draw_grouped_results")) || [];
+      const query = searchBox.value.toLowerCase();
+      container.innerHTML = "";
 
-      const prize = document.createElement("div");
-      prize.className = "prize-label";
-      prize.textContent = `Prize: ${group.prize}`;
-      block.appendChild(prize);
-
-      const time = document.createElement("div");
-      time.className = "timestamp";
-      time.textContent = `Drawn at: ${new Date(group.timestamp).toLocaleString()}`;
-      block.appendChild(time);
-
-      group.entries.forEach(row => {
-        const ul = document.createElement("ul");
-        const labels = ["Name", "Department", "Email"];
-        row.forEach((val, i) => {
-          const li = document.createElement("li");
-          li.textContent = `${labels[i] || "Field"}: ${val}`;
-          ul.appendChild(li);
+      groupedResults.forEach(group => {
+        const matchedEntries = group.entries.filter(row => {
+          const name = row[0]?.toLowerCase() || "";
+          const email = row[2]?.toLowerCase() || "";
+          return name.includes(query) || email.includes(query);
         });
-        block.appendChild(ul);
-      });
 
-      container.appendChild(block);
-    });
+        if (matchedEntries.length > 0) {
+          const block = document.createElement("div");
+          block.className = "result-block";
+
+          const prize = document.createElement("div");
+          prize.className = "prize-label";
+          prize.textContent = `Prize: ${group.prize}`;
+          block.appendChild(prize);
+
+          const time = document.createElement("div");
+          time.className = "timestamp";
+          time.textContent = `Drawn at: ${new Date(group.timestamp).toLocaleString()}`;
+          block.appendChild(time);
+
+          matchedEntries.forEach(row => {
+            const ul = document.createElement("ul");
+            const labels = ["Name", "Department", "Email"];
+            row.forEach((val, i) => {
+              const li = document.createElement("li");
+              li.textContent = `${labels[i] || "Field"}: ${val}`;
+              ul.appendChild(li);
+            });
+            block.appendChild(ul);
+          });
+
+          container.appendChild(block);
+        }
+      });
+    }
+
+    searchBox.addEventListener("input", renderResults);
+    window.onload = renderResults;
   </script>
 </body>
 </html>
