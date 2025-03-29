@@ -186,9 +186,13 @@
     });
 
     const channel = new BroadcastChannel("lucky_draw_channel");
-    channel.onmessage = (e) => {
-      if (e.data === "draw") performDraw();
-    };
+channel.onmessage = (e) => {
+  if (e.data?.type === "draw" && e.data.prize && e.data.count) {
+    document.getElementById("prize-input").value = e.data.prize;
+    document.getElementById("draw-count").value = e.data.count;
+    performDraw();
+  }
+};
   </script>
 </body>
 </html>
