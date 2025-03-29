@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Lucky Draw 2025</title>
+  <title>Lucky Draw Animation</title>
   <style>
     body {
       margin: 0;
-      background: #0f2027;
       background: linear-gradient(to right, #2c5364, #203a43, #0f2027);
       color: #fff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -47,7 +46,9 @@
 
     .roller span {
       position: absolute;
-      animation: roll 2s ease-out forwards;
+      top: -100%;
+      opacity: 0;
+      animation: roll 1s ease-out forwards;
     }
 
     @keyframes roll {
@@ -67,11 +68,11 @@
   </style>
 </head>
 <body>
-  <h1 id="prize-title">🎁 Prize Draw</h1>
+  <h1 id="prize-title">🎁 Waiting for Prize...</h1>
   <div class="slot">
-    <div class="roller" id="roller1"></div>
-    <div class="roller" id="roller2"></div>
-    <div class="roller" id="roller3"></div>
+    <div class="roller" id="roller1">&nbsp;</div>
+    <div class="roller" id="roller2">&nbsp;</div>
+    <div class="roller" id="roller3">&nbsp;</div>
   </div>
 
   <script>
@@ -79,7 +80,7 @@
 
     channel.onmessage = (e) => {
       const data = e.data;
-      if (data?.type === "draw" && data.entries?.length) {
+      if (data?.type === "draw" && data.prize && data.entries?.length) {
         startAnimation(data.prize, data.entries);
       }
     };
@@ -89,8 +90,8 @@
       const [a = "?", b = "?", c = "?"] = entries[0];
 
       rollTo("roller1", a, 0);
-      rollTo("roller2", b, 600);
-      rollTo("roller3", c, 1200);
+      rollTo("roller2", b, 1000);
+      rollTo("roller3", c, 2000);
     }
 
     function rollTo(id, value, delay) {
@@ -98,7 +99,6 @@
       el.innerHTML = "";
       const span = document.createElement("span");
       span.textContent = value;
-      span.style.top = "-100%";
       span.style.animationDelay = `${delay}ms`;
       el.appendChild(span);
     }
