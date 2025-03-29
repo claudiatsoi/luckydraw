@@ -2,105 +2,123 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Lucky Draw Results</title>
+  <title>Lucky Draw Results (Live)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
       max-width: 800px;
       margin: auto;
+      background: #f4f4f4;
     }
     h1 {
       text-align: center;
       color: #336699;
     }
-    #search-box {
-      display: block;
-      margin: 20px auto;
-      padding: 10px;
-      font-size: 1rem;
-      width: 60%;
-      max-width: 400px;
-    }
     .result-block {
-      border: 1px solid #ccc;
+      background: #fff;
+      border: 1px solid #ddd;
       border-radius: 8px;
       padding: 15px;
       margin-bottom: 20px;
-      background-color: #f9f9f9;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     .prize-label {
       font-size: 1.2rem;
       font-weight: bold;
-      margin-bottom: 5px;
+      color: #333;
     }
     .timestamp {
       font-size: 0.9rem;
-      color: #888;
+      color: #777;
       margin-bottom: 10px;
     }
     ul {
       list-style-type: none;
       padding: 0;
+      margin: 0;
     }
     li {
       padding: 5px 0;
     }
+    #search-box {
+      display: block;
+      margin: 20px auto;
+      padding: 10px;
+      width: 80%;
+      max-width: 400px;
+      font-size: 1rem;
+    }
   </style>
-</head>
-<body>
-  <h1>All Lucky Draw Results</h1>
-  <input type="text" id="search-box" placeholder="Search by name or email..." />
-  <div id="result-container"></div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
 
-  <script>
-    const container = document.getElementById("result-container");
-    const searchBox = document.getElementById("search-box");
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTmIJtETIhJdfEthXhNKPAgcuN-LYVvsY",
+      authDomain: "luckydraw-f962d.firebaseapp.com",
+      projectId: "luckydraw-f962d",
+      storageBucket: "luckydraw-f962d.appspot.com",
+      messagingSenderId: "346504217445",
+      appId: "1:346504217445:web:dc7b24c8f8028b2e70d78c",
+      measurementId: "G-BL5Z3NDE3K"
+    };
 
-    function renderResults() {
-      const groupedResults = JSON.parse(localStorage.getItem("lucky_draw_grouped_results")) || [];
-      const query = searchBox.value.toLowerCase();
-      container.innerHTML = "";
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-      groupedResults.forEach(group => {
-        const matchedEntries = group.entries.filter(row => {
-          const name = row[0]?.toLowerCase() || "";
-          const email = row[2]?.toLowerCase() || "";
-          return name.includes(query) || email.includes(query);
-        });
+    const resultContainer = document.createElement("div");
 
-        if (matchedEntries.length > 0) {
-          const block = document.createElement("div");
-          block.className = "result-block";
+    document.addEventListener("DOMContentLoaded", () => {
+      document.body.appendChild(resultContainer);
+      setupLiveListener();
+      document.getElementById("search-box").addEventListener("input", setupLiveListener);
+    });
 
-          const prize = document.createElement("div");
-          prize.className = "prize-label";
-          prize.textContent = `Prize: ${group.prize}`;
-          block.appendChild(prize);
+    function setupLiveListener() {
+      const search = document.getElementById("search-box").value.toLowerCase();
+      const q = query(collection(db, "luckyDrawResults"), orderBy("timestamp", "desc"));
 
-          const time = document.createElement("div");
-          time.className = "timestamp";
-          time.textContent = `Drawn at: ${new Date(group.timestamp).toLocaleString()}`;
-          block.appendChild(time);
+      onSnapshot(q, (snapshot) => {
+        resultContainer.innerHTML = "";
 
-          matchedEntries.forEach(row => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const { prize, timestamp, winner } = data;
+          const name = winner.name?.toLowerCase() || "";
+          const email = winner.email?.toLowerCase() || "";
+
+          if (!search || name.includes(search) || email.includes(search)) {
+            const block = document.createElement("div");
+            block.className = "result-block";
+
+            const prizeLabel = document.createElement("div");
+            prizeLabel.className = "prize-label";
+            prizeLabel.textContent = `🎁 ${prize}`;
+            block.appendChild(prizeLabel);
+
+            const ts = document.createElement("div");
+            ts.className = "timestamp";
+            ts.textContent = `⏱ ${new Date(timestamp.toDate()).toLocaleString()}`;
+            block.appendChild(ts);
+
             const ul = document.createElement("ul");
-            const labels = ["Name", "Department", "Email"];
-            row.forEach((val, i) => {
+            ["name", "department", "email"].forEach(key => {
               const li = document.createElement("li");
-              li.textContent = `${labels[i] || "Field"}: ${val}`;
+              li.textContent = `${key.charAt(0).toUpperCase() + key.slice(1)}: ${winner[key] || ""}`;
               ul.appendChild(li);
             });
-            block.appendChild(ul);
-          });
 
-          container.appendChild(block);
-        }
+            block.appendChild(ul);
+            resultContainer.appendChild(block);
+          }
+        });
       });
     }
-
-    searchBox.addEventListener("input", renderResults);
-    window.onload = renderResults;
   </script>
+</head>
+<body>
+  <h1>🎉 Live Lucky Draw Results</h1>
+  <input type="text" id="search-box" placeholder="Search by name or email..." />
 </body>
 </html>
