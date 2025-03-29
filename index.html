@@ -40,6 +40,27 @@
     }
     input[type="file"] { margin: 20px auto; }
     #prize-title { font-size: 2rem; color: #336699; margin: 20px 0; }
+
+    #search-box {
+      margin-top: 30px;
+      padding: 10px;
+      font-size: 1rem;
+      width: 60%;
+      max-width: 400px;
+    }
+
+    #full-results {
+      margin-top: 40px;
+      text-align: left;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .result-item {
+      border-bottom: 1px solid #ccc;
+      padding: 10px 0;
+    }
   </style>
 </head>
 <body>
@@ -62,6 +83,10 @@
 
   <div id="prize-title"></div>
   <div id="draw-values"></div>
+
+  <input type="text" id="search-box" placeholder="Search by name or email..." />
+
+  <div id="full-results"></div>
 
   <script>
     let drawList = [];
@@ -95,6 +120,24 @@
       });
     }
 
+    function renderResultList() {
+      const container = document.getElementById("full-results");
+      const search = document.getElementById("search-box").value.toLowerCase();
+      const labels = ["Name", "Department", "Email"];
+      container.innerHTML = "";
+
+      pickedList.forEach(row => {
+        const name = row[0]?.toLowerCase() || "";
+        const email = row[2]?.toLowerCase() || "";
+        if (name.includes(search) || email.includes(search)) {
+          const div = document.createElement("div");
+          div.className = "result-item";
+          div.innerHTML = labels.map((label, i) => `<strong>${label}:</strong> ${row[i] || ""}`).join("<br>");
+          container.appendChild(div);
+        }
+      });
+    }
+
     function performDraw() {
       const prize = document.getElementById("prize-input").value;
       const count = parseInt(document.getElementById("draw-count").value, 10);
@@ -110,6 +153,7 @@
       }
       pickedList.push(...drawn);
       animateDraw(drawn);
+      renderResultList();
       saveGroupedResults(prize, drawn);
     }
 
@@ -124,6 +168,7 @@
     }
 
     document.getElementById("draw-button").addEventListener("click", performDraw);
+    document.getElementById("search-box").addEventListener("input", renderResultList);
 
     document.getElementById("export-button").addEventListener("click", () => {
       const grouped = JSON.parse(localStorage.getItem("lucky_draw_grouped_results")) || [];
