@@ -2,202 +2,79 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lucky Draw</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    .card {
-      border: 2px solid #336699;
-      border-radius: 10px;
-      display: inline-block;
-      padding: 20px;
-      margin: 20px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      animation: zoomIn 0.5s ease;
-    }
-    .labelled-value {
-      font-size: 1.5rem;
-      margin: 10px 0;
-      opacity: 0;
-      animation: fadeIn 1s ease forwards;
-    }
-    .labelled-value:nth-child(1) { animation-delay: 0s; }
-    .labelled-value:nth-child(2) { animation-delay: 2s; }
-    .labelled-value:nth-child(3) { animation-delay: 4s; }
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
 
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
-    @keyframes zoomIn {
-      from { transform: scale(0.8); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
+    const firebaseConfig = {
+      apiKey: "AIzaSyDTmIJtETIhJdfEthXhNKPAgcuN-LYVvsY",
+      authDomain: "luckydraw-f962d.firebaseapp.com",
+      projectId: "luckydraw-f962d",
+      storageBucket: "luckydraw-f962d.appspot.com",
+      messagingSenderId: "346504217445",
+      appId: "1:346504217445:web:dc7b24c8f8028b2e70d78c",
+      measurementId: "G-BL5Z3NDE3K"
+    };
 
-    #draw-button, #export-button, #view-result-button {
-      padding: 10px 20px;
-      font-size: 1.2rem;
-      margin: 10px;
-    }
-    input[type="file"] { margin: 20px auto; }
-    #prize-title { font-size: 2rem; color: #336699; margin: 20px 0; }
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const channel = new BroadcastChannel("lucky_draw_channel");
 
-    #search-box {
-      margin-top: 30px;
-      padding: 10px;
-      font-size: 1rem;
-      width: 60%;
-      max-width: 400px;
-    }
+    let drawList = [];
 
-    #full-results {
-      margin-top: 40px;
-      text-align: left;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+    window.onload = () => {
+      document.getElementById("upload").addEventListener("change", (e) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          drawList = reader.result
+            .split(/\r?\n/)
+            .map(line => line.split(",").map(cell => cell.trim()))
+            .filter(row => row.length);
+        };
+        reader.readAsText(e.target.files[0]);
+      });
 
-    .result-item {
-      border-bottom: 1px solid #ccc;
-      padding: 10px 0;
-    }
-  </style>
+      document.getElementById("draw-button").addEventListener("click", async () => {
+        const prize = document.getElementById("prize-input").value;
+        const count = parseInt(document.getElementById("draw-count").value);
+        if (!prize || !count || drawList.length < count) {
+          alert("Check prize, count, or draw list.");
+          return;
+        }
+
+        const drawn = [];
+        for (let i = 0; i < count; i++) {
+          const idx = Math.floor(Math.random() * drawList.length);
+          drawn.push(drawList.splice(idx, 1)[0]);
+        }
+
+        for (const entry of drawn) {
+          await addDoc(collection(db, "luckyDrawResults"), {
+            prize,
+            timestamp: new Date(),
+            winner: {
+              name: entry[0] || "",
+              department: entry[1] || "",
+              email: entry[2] || ""
+            }
+          });
+        }
+
+        channel.postMessage({ type: "draw", prize, entries: drawn });
+        alert(`✅ ${count} winner(s) drawn for ${prize}!`);
+      });
+    };
+  </script>
 </head>
 <body>
   <h1>Lucky Draw</h1>
-  <input type="file" id="upload" accept=".txt,.csv" />
-
-  <div>
-    <label for="prize-input">Prize Title:</label>
-    <input type="text" id="prize-input" placeholder="e.g., Grand Prize" />
-  </div>
-
-  <div>
-    <label for="draw-count">Number of People to Draw:</label>
-    <input type="number" id="draw-count" value="1" min="1" />
-  </div>
-
-  <button id="draw-button">Draw</button>
-  <button id="export-button">Export Results</button>
-  <a href="luckydraw/results.html" target="_blank"><button id="view-result-button">View Full Results</button></a>
-
-  <div id="prize-title"></div>
-  <div id="draw-values"></div>
-
-  <input type="text" id="search-box" placeholder="Search by name or email..." />
-
-  <div id="full-results"></div>
-
-  <script>
-    let drawList = [];
-    let pickedList = [];
-
-    document.getElementById("upload").addEventListener("change", (e) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        drawList = reader.result.split(/\r?\n/).map(line => line.split(",").map(cell => cell.trim())).filter(row => row.length > 0);
-      };
-      reader.readAsText(e.target.files[0]);
-    });
-
-    function animateDraw(rows) {
-      const drawValuesDiv = document.getElementById("draw-values");
-      drawValuesDiv.innerHTML = "";
-
-      rows.forEach((row) => {
-        const card = document.createElement("div");
-        card.className = "card";
-
-        const labels = ["Name", "Department", "Email"];
-        row.forEach((val, index) => {
-          const labelled = document.createElement("div");
-          labelled.className = "labelled-value";
-          labelled.textContent = `${labels[index] || "Field"}: ${val}`;
-          card.appendChild(labelled);
-        });
-
-        drawValuesDiv.appendChild(card);
-      });
-    }
-
-    function renderResultList() {
-      const container = document.getElementById("full-results");
-      const search = document.getElementById("search-box").value.toLowerCase();
-      const labels = ["Name", "Department", "Email"];
-      container.innerHTML = "";
-
-      pickedList.forEach(row => {
-        const name = row[0]?.toLowerCase() || "";
-        const email = row[2]?.toLowerCase() || "";
-        if (name.includes(search) || email.includes(search)) {
-          const div = document.createElement("div");
-          div.className = "result-item";
-          div.innerHTML = labels.map((label, i) => `<strong>${label}:</strong> ${row[i] || ""}`).join("<br>");
-          container.appendChild(div);
-        }
-      });
-    }
-
-    function performDraw() {
-      const prize = document.getElementById("prize-input").value;
-      const count = parseInt(document.getElementById("draw-count").value, 10);
-      if (!prize) return alert("Please enter a prize title.");
-      if (drawList.length < count) return alert("Not enough entries.");
-
-      document.getElementById("prize-title").textContent = prize;
-
-      const drawn = [];
-      for (let i = 0; i < count; i++) {
-        const idx = Math.floor(Math.random() * drawList.length);
-        drawn.push(drawList.splice(idx, 1)[0]);
-      }
-      pickedList.push(...drawn);
-      animateDraw(drawn);
-      renderResultList();
-      saveGroupedResults(prize, drawn);
-    }
-
-    function saveGroupedResults(prize, entries) {
-      const saved = JSON.parse(localStorage.getItem("lucky_draw_grouped_results")) || [];
-      saved.push({
-        prize,
-        timestamp: Date.now(),
-        entries
-      });
-      localStorage.setItem("lucky_draw_grouped_results", JSON.stringify(saved));
-    }
-
-    document.getElementById("draw-button").addEventListener("click", performDraw);
-    document.getElementById("search-box").addEventListener("input", renderResultList);
-
-    document.getElementById("export-button").addEventListener("click", () => {
-      const grouped = JSON.parse(localStorage.getItem("lucky_draw_grouped_results")) || [];
-      const csvContent = grouped.map(group =>
-        group.entries.map(row => [group.prize, new Date(group.timestamp).toLocaleString(), ...row].join(",")).join("\n")
-      ).join("\n");
-
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "lucky_draw_results.csv";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-
-    const channel = new BroadcastChannel("lucky_draw_channel");
-channel.onmessage = (e) => {
-  if (e.data?.type === "draw" && e.data.prize && e.data.count) {
-    document.getElementById("prize-input").value = e.data.prize;
-    document.getElementById("draw-count").value = e.data.count;
-    performDraw();
-  }
-};
-channel.postMessage({
-  type: "draw",
-  prize: "Grand Prize",
-  entries: [["Alice", "Marketing", "alice@example.com"]]
-});
-  </script>
+  <input type="file" id="upload" accept=".csv" />
+  <br>
+  <label>Prize Name: <input type="text" id="prize-input" /></label>
+  <br>
+  <label>Number of Winners: <input type="number" id="draw-count" value="1" min="1" /></label>
+  <br>
+  <button id="draw-button">🎯 Draw</button>
 </body>
 </html>
