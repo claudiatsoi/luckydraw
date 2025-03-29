@@ -83,18 +83,14 @@
 
     channel.onmessage = (e) => {
       const data = e.data;
-      if (data?.type === "draw" && data.prize && data.count) {
-        const stored = JSON.parse(localStorage.getItem("lucky_draw_grouped_results") || "[]");
-        const last = stored.find(group => group.prize === data.prize && group.entries.length === data.count);
-        if (last) {
-          startAnimation(last.prize, last.entries);
-        }
+      if (data?.type === "draw" && data.prize && data.entries?.length) {
+        startAnimation(data.prize, data.entries);
       }
     };
 
     function startAnimation(prize, entries) {
       document.getElementById("prize-title").textContent = `🎉 ${prize}`;
-      const [a = "?", b = "?", c = "?"] = entries[entries.length - 1];
+      const [a = "?", b = "?", c = "?"] = entries[0];
 
       showRollWithDelay("roller1", a, 0);
       showRollWithDelay("roller2", b, 1000);
@@ -107,8 +103,8 @@
       el.classList.remove("animate");
       const span = document.createElement("span");
       span.textContent = value;
-      el.appendChild(span);
       setTimeout(() => {
+        el.appendChild(span);
         el.classList.add("animate");
       }, delay);
     }
