@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lucky Draw 2025</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0f2027;
+      background: linear-gradient(to right, #2c5364, #203a43, #0f2027);
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1#prize-title {
+      font-size: 3rem;
+      margin-bottom: 40px;
+      text-shadow: 2px 2px 4px #000;
+    }
+
+    .slot {
+      display: flex;
+      gap: 30px;
+    }
+
+    .roller {
+      width: 200px;
+      height: 60px;
+      border-radius: 10px;
+      background: #111;
+      border: 2px solid #fff;
+      font-size: 2rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+
+    .roller span {
+      position: absolute;
+      animation: roll 2s ease-out forwards;
+    }
+
+    @keyframes roll {
+      0% {
+        top: -100%;
+        opacity: 0;
+      }
+      50% {
+        top: 0;
+        opacity: 1;
+      }
+      100% {
+        top: 0;
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1 id="prize-title">🎁 Prize Draw</h1>
+  <div class="slot">
+    <div class="roller" id="roller1"></div>
+    <div class="roller" id="roller2"></div>
+    <div class="roller" id="roller3"></div>
+  </div>
+
+  <script>
+    const channel = new BroadcastChannel("lucky_draw_channel");
+
+    channel.onmessage = (e) => {
+      const data = e.data;
+      if (data?.type === "draw" && data.entries?.length) {
+        startAnimation(data.prize, data.entries);
+      }
+    };
+
+    function startAnimation(prize, entries) {
+      document.getElementById("prize-title").textContent = `🎉 ${prize}`;
+      const [a = "?", b = "?", c = "?"] = entries[0];
+
+      rollTo("roller1", a, 0);
+      rollTo("roller2", b, 600);
+      rollTo("roller3", c, 1200);
+    }
+
+    function rollTo(id, value, delay) {
+      const el = document.getElementById(id);
+      el.innerHTML = "";
+      const span = document.createElement("span");
+      span.textContent = value;
+      span.style.top = "-100%";
+      span.style.animationDelay = `${delay}ms`;
+      el.appendChild(span);
+    }
+  </script>
+</body>
+</html>
