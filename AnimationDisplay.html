@@ -92,18 +92,27 @@
       document.getElementById("prize-title").textContent = `🎉 ${prize}`;
       const [a = "?", b = "?", c = "?"] = entries[0];
 
+      resetRoller("roller1");
+      resetRoller("roller2");
+      resetRoller("roller3");
+
       showRollWithDelay("roller1", a, 0);
       showRollWithDelay("roller2", b, 1000);
       showRollWithDelay("roller3", c, 2000);
     }
 
+    function resetRoller(id) {
+      const el = document.getElementById(id);
+      el.classList.remove("animate");
+      el.innerHTML = "<span>&nbsp;</span>";
+    }
+
     function showRollWithDelay(id, value, delay) {
       const el = document.getElementById(id);
-      el.innerHTML = "";
-      el.classList.remove("animate");
-      const span = document.createElement("span");
-      span.textContent = value;
       setTimeout(() => {
+        el.innerHTML = "";
+        const span = document.createElement("span");
+        span.textContent = value;
         el.appendChild(span);
         el.classList.add("animate");
       }, delay);
