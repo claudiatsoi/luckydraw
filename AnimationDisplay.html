@@ -48,6 +48,9 @@
       position: absolute;
       top: -100%;
       opacity: 0;
+    }
+
+    .roller.animate span {
       animation: roll 1s ease-out forwards;
     }
 
@@ -80,27 +83,34 @@
 
     channel.onmessage = (e) => {
       const data = e.data;
-      if (data?.type === "draw" && data.prize && data.entries?.length) {
-        startAnimation(data.prize, data.entries);
+      if (data?.type === "draw" && data.prize && data.count) {
+        const stored = JSON.parse(localStorage.getItem("lucky_draw_grouped_results") || "[]");
+        const last = stored.find(group => group.prize === data.prize && group.entries.length === data.count);
+        if (last) {
+          startAnimation(last.prize, last.entries);
+        }
       }
     };
 
     function startAnimation(prize, entries) {
       document.getElementById("prize-title").textContent = `🎉 ${prize}`;
-      const [a = "?", b = "?", c = "?"] = entries[0];
+      const [a = "?", b = "?", c = "?"] = entries[entries.length - 1];
 
-      rollTo("roller1", a, 0);
-      rollTo("roller2", b, 1000);
-      rollTo("roller3", c, 2000);
+      showRollWithDelay("roller1", a, 0);
+      showRollWithDelay("roller2", b, 1000);
+      showRollWithDelay("roller3", c, 2000);
     }
 
-    function rollTo(id, value, delay) {
+    function showRollWithDelay(id, value, delay) {
       const el = document.getElementById(id);
       el.innerHTML = "";
+      el.classList.remove("animate");
       const span = document.createElement("span");
       span.textContent = value;
-      span.style.animationDelay = `${delay}ms`;
       el.appendChild(span);
+      setTimeout(() => {
+        el.classList.add("animate");
+      }, delay);
     }
   </script>
 </body>
