@@ -193,6 +193,11 @@ channel.onmessage = (e) => {
     performDraw();
   }
 };
+channel.postMessage({
+  type: "draw",
+  prize: "Grand Prize",
+  entries: [["Alice", "Marketing", "alice@example.com"]]
+});
   </script>
 </body>
 </html>
