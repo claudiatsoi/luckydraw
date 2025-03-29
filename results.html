@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lucky Draw Results</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #336699;
+    }
+    .result-block {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+    }
+    .prize-label {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .timestamp {
+      font-size: 0.9rem;
+      color: #888;
+      margin-bottom: 10px;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      padding: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>All Lucky Draw Results</h1>
+  <div id="result-container"></div>
+
+  <script>
+    const container = document.getElementById("result-container");
+    const groupedResults = JSON.parse(localStorage.getItem("lucky_draw_grouped_results")) || [];
+
+    groupedResults.forEach(group => {
+      const block = document.createElement("div");
+      block.className = "result-block";
+
+      const prize = document.createElement("div");
+      prize.className = "prize-label";
+      prize.textContent = `Prize: ${group.prize}`;
+      block.appendChild(prize);
+
+      const time = document.createElement("div");
+      time.className = "timestamp";
+      time.textContent = `Drawn at: ${new Date(group.timestamp).toLocaleString()}`;
+      block.appendChild(time);
+
+      group.entries.forEach(row => {
+        const ul = document.createElement("ul");
+        const labels = ["Name", "Department", "Email"];
+        row.forEach((val, i) => {
+          const li = document.createElement("li");
+          li.textContent = `${labels[i] || "Field"}: ${val}`;
+          ul.appendChild(li);
+        });
+        block.appendChild(ul);
+      });
+
+      container.appendChild(block);
+    });
+  </script>
+</body>
+</html>
