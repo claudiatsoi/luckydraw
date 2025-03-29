@@ -3,16 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <title>Remote Draw Control</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+    input, select, button {
+      margin: 10px;
+      padding: 10px;
+      font-size: 1rem;
+    }
+    #default-names {
+      margin-top: 20px;
+    }
+    #default-names ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    #default-names li {
+      margin: 5px 0;
+    }
+  </style>
 </head>
 <body>
   <h1>Remote Draw Controller</h1>
-  <button onclick="draw()">Trigger Draw</button>
+
+  <div>
+    <label for="prize-title">Prize Name:</label>
+    <input type="text" id="prize-title" placeholder="e.g. Grand Prize" />
+  </div>
+
+  <div>
+    <label for="draw-count">No. of Winners:</label>
+    <input type="number" id="draw-count" value="1" min="1" />
+  </div>
+
+  <button onclick="triggerDraw()">Trigger Draw</button>
+
+  <hr>
+
+  <h3>Default Prize Names</h3>
+  <div id="default-names">
+    <ul id="default-list"></ul>
+    <input type="text" id="new-default" placeholder="Add default prize name" />
+    <button onclick="addDefault()">Add</button>
+  </div>
 
   <script>
     const channel = new BroadcastChannel("lucky_draw_channel");
-    function draw() {
-      channel.postMessage("draw");
+
+    function triggerDraw() {
+      const prize = document.getElementById("prize-title").value.trim();
+      const count = parseInt(document.getElementById("draw-count").value);
+      if (!prize || isNaN(count) || count < 1) {
+        alert("Please enter a valid prize name and number of winners.");
+        return;
+      }
+      channel.postMessage({ type: "draw", prize, count });
     }
+
+    function addDefault() {
+      const input = document.getElementById("new-default");
+      const value = input.value.trim();
+      if (!value) return;
+      const defaults = JSON.parse(localStorage.getItem("default_prizes") || "[]");
+      defaults.push(value);
+      localStorage.setItem("default_prizes", JSON.stringify(defaults));
+      input.value = "";
+      renderDefaults();
+    }
+
+    function renderDefaults() {
+      const list = document.getElementById("default-list");
+      list.innerHTML = "";
+      const defaults = JSON.parse(localStorage.getItem("default_prizes") || "[]");
+      defaults.forEach((name) => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.textContent = name;
+        btn.onclick = () => {
+          document.getElementById("prize-title").value = name;
+        };
+        li.appendChild(btn);
+        list.appendChild(li);
+      });
+    }
+
+    renderDefaults();
   </script>
 </body>
 </html>
